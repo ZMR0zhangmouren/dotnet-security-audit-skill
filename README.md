@@ -79,9 +79,6 @@ skills/
   dotnet-archive-extract-audit/
   dotnet-tpl-audit/
   dotnet-exploit-chain-audit/
-  memory/
-
-shared/
   DOTNET_AUDIT_GRABBER_INDEX.md
   DOTNET_FRAMEWORK_SKILL_TEMPLATE.md
   DOTNET_ROUTE_OUTPUT_TEMPLATES.md
@@ -151,7 +148,7 @@ flowchart TD
 ```mermaid
 flowchart LR
   R[route_mapping\nroute_id + entry] --> T[route_tracer\ntrace_status + call_chain]
-  T --> S[SINK 命中\nshared/DOTNET_SINK_REFERENCE]
+  T --> S[SINK 命中]
   S --> E[EVID_* 证据点\nEVIDENCE_POINT_IDS]
 
   E --> C1[已确认\nConfirmed]
@@ -202,38 +199,31 @@ flowchart LR
 
 开始编写或扩展 Skill 前，建议优先阅读：
 
-1. shared/EVIDENCE_POINT_IDS.md
-2. shared/IO_PATH_CONVENTION.md
-3. shared/DOTNET_SINK_REFERENCE.md
-4. shared/DOTNET_AUDIT_GRABBER_INDEX.md
-5. shared/DOTNET_ROUTE_OUTPUT_TEMPLATES.md
-6. shared/DOTNET_VULN_SKILL_TEMPLATE.md
-7. shared/DOTNET_FRAMEWORK_SKILL_TEMPLATE.md
-8. shared/SEVERITY_RATING.md
+
 
 ## 如何扩展新 Skill
 
 ### 新增漏洞专项
 
-- 以 `shared/DOTNET_VULN_SKILL_TEMPLATE.md` 起稿
+
 - 显式声明与 route-tracer/framework_audit 的消费关系
 - 引用对应 EVID_* 证据点
 - 输出已确认、待验证、环境依赖三类结论
 
 ### 新增框架专项
 
-- 以 `shared/DOTNET_FRAMEWORK_SKILL_TEMPLATE.md` 起稿
+
 - 明确中间件顺序、过滤器覆盖、鉴权策略绑定与序列化边界
 - 输出供漏洞专项复用的前置事实
 
 ### 调整路由追踪产物
 
-- 优先修改 `shared/DOTNET_ROUTE_OUTPUT_TEMPLATES.md`
+
 - 再同步 route-mapper 与 route-tracer Skill
 
 ## 质量与协作建议
 
-- 不要在多个文件维护重复规范，统一回收到 shared/
+
 - 任何高危结论都应可追溯到 route_id、trace_status、sink evidence
 - pipeline 汇总时保留证据冲突，不做静默覆盖
 - 对于环境依赖项，明确触发前提与验证建议
@@ -246,7 +236,7 @@ flowchart LR
 - 路由建模与追踪模板
 - 漏洞专项与框架专项模板
 - pipeline 结构化编排能力
-- 会话恢复辅助文档（skills/memory）
+
 
 如需深入了解 Skill 使用细节，请继续阅读 `skills/README.md`。
 
