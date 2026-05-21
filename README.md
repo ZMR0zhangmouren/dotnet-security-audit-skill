@@ -3,7 +3,19 @@
 面向 .NET 生态的白盒代码安全审计 Skill 仓库。
 
 该项目聚焦“结构化审计”而不是一次性结论输出：先完成入口建模，再做路由追踪与证据闭合，最后进行漏洞专项、利用链聚合与质量汇总，确保结论可复核、可追责、可复现。
+---
 
+## 🚀 快速开始
+
+### 审计流程可视化（推荐先看）
+
+交互式架构图
+
+![dotnet-audit-pipeline-bright](./assets/dotnet-audit-pipeline-bright.png)
+
+> 包含完整的流程拓扑、9 个阶段、7 条输出产物、证据闭合视图。 
+
+---
 ## 项目目标
 
 - 提供一套可复用的 .NET 代码安全审计 Skill 体系
@@ -103,7 +115,13 @@ shared/
 8. dotnet-exploit-chain-audit
 9. dotnet-audit-pipeline
 
-### 架构流程图
+### 架构流程图 & 证据闭合视图
+
+该图展示了从入口建模 → 路由追踪 → 漏洞专项 → 最终报告的完整链路，以及 7 条并行的产物输出流（O1~O8）。
+
+**📊 可视化架构** — 已在上方"快速开始"中提供。
+
+以下是逻辑流详解：
 
 ```mermaid
 flowchart TD
@@ -231,3 +249,19 @@ flowchart LR
 - 会话恢复辅助文档（skills/memory）
 
 如需深入了解 Skill 使用细节，请继续阅读 `skills/README.md`。
+
+---
+
+## 📸 关于可视化图表
+
+### 导出架构图为 PNG / PDF
+
+[dotnet-audit-pipeline-bright-diagram.html](./dotnet-audit-pipeline-bright-diagram.html) 是一份自包含的 HTML 文件，内置导出功能：
+
+1. **打开文件** — 用浏览器直接打开
+2. **导出** — 点击右上角的 ⋯ 按钮：
+   - 📋 **Copy** — 复制高分辨率 PNG 到剪贴板（可直接粘贴到文档）
+   - 🖼️ **PNG** — 下载 PNG 图片文件
+   - 📄 **PDF** — 生成包含图表的 PDF 文档
+
+所有导出功能基于 `html2canvas` 和 `jsPDF` 库（CDN 加载，SRI 保护），完全在浏览器中完成，无需额外工具或网络调用。

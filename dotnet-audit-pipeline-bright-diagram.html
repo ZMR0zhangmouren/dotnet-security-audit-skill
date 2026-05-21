@@ -1,0 +1,558 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>.NET Security Audit Pipeline - Bright Architecture Diagram</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" integrity="sha384-ZZ1pncU3bQe8y31yfZdMFdSpttDoPmOZg2wguVK9almUodir1PghgT0eY7Mrty8H" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js" integrity="sha384-en/ztfPSRkGfME4KIm05joYXynqzUgbsG5nMrj/xEFAHXkeZfO3yMK8QQ+mP7p1/" crossorigin="anonymous"></script>
+  <style>
+    :root {
+      --bg: #dbeafe;
+      --bg-2: #eef6ff;
+      --grid: #bfdbfe;
+      --panel: #f8fbff;
+      --panel-border: #93c5fd;
+      --text: #0f172a;
+      --muted: #334155;
+      --arrow: #475569;
+      --rose: #e11d48;
+      --frontend-fill: rgba(8, 51, 68, 0.14);
+      --frontend-stroke: #0891b2;
+      --backend-fill: rgba(6, 78, 59, 0.14);
+      --backend-stroke: #10b981;
+      --database-fill: rgba(76, 29, 149, 0.14);
+      --database-stroke: #8b5cf6;
+      --cloud-fill: rgba(120, 53, 15, 0.14);
+      --cloud-stroke: #f59e0b;
+      --security-fill: rgba(136, 19, 55, 0.14);
+      --security-stroke: #e11d48;
+      --external-fill: rgba(51, 65, 85, 0.12);
+      --external-stroke: #475569;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "JetBrains Mono", monospace;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 12% 18%, #ffffff 0%, rgba(255, 255, 255, 0) 32%),
+        radial-gradient(circle at 88% 10%, #f0f9ff 0%, rgba(240, 249, 255, 0) 30%),
+        linear-gradient(140deg, var(--bg) 0%, var(--bg-2) 42%, #e0f2fe 100%);
+      padding: 24px;
+    }
+
+    .container {
+      max-width: 1300px;
+      margin: 0 auto;
+      background: rgba(255, 255, 255, 0.74);
+      border: 1px solid rgba(147, 197, 253, 0.65);
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(15, 23, 42, 0.14);
+      overflow: hidden;
+      backdrop-filter: blur(4px);
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 18px 22px;
+      border-bottom: 1px solid rgba(147, 197, 253, 0.65);
+      background: linear-gradient(90deg, rgba(255, 255, 255, 0.9), rgba(239, 246, 255, 0.92));
+    }
+
+    .title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .pulse-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6);
+      animation: pulse 1.8s infinite;
+      flex: 0 0 auto;
+    }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6); }
+      70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+    }
+
+    h1 {
+      font-size: 16px;
+      line-height: 1.3;
+      margin: 0;
+      letter-spacing: 0.2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .subtitle {
+      margin: 3px 0 0;
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 0.25px;
+    }
+
+    .toolbar {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      flex: 0 0 auto;
+    }
+
+    .toolbar-actions {
+      display: none;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .toolbar.expanded .toolbar-actions {
+      display: inline-flex;
+    }
+
+    .toolbar-btn,
+    .toolbar-toggle {
+      border: 1px solid #93c5fd;
+      background: rgba(248, 250, 252, 0.95);
+      color: #0f172a;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 11px;
+      padding: 6px 9px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .toolbar-btn:hover,
+    .toolbar-toggle:hover {
+      background: #dbeafe;
+      border-color: #60a5fa;
+    }
+
+    .toolbar-toggle {
+      font-size: 14px;
+      line-height: 1;
+      width: 32px;
+      height: 32px;
+      padding: 0;
+    }
+
+    .diagram-shell {
+      margin: 18px;
+      border: 1px solid var(--panel-border);
+      border-radius: 14px;
+      background: var(--panel);
+      overflow: hidden;
+    }
+
+    svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      padding: 0 18px 18px;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.86);
+      border: 1px solid var(--panel-border);
+      border-radius: 12px;
+      padding: 12px;
+      min-height: 126px;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .card h3 {
+      margin: 0;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .card ul {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      font-size: 10px;
+      color: #1e293b;
+      line-height: 1.55;
+    }
+
+    .card-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      flex: 0 0 auto;
+    }
+
+    .dot-backend { background: #10b981; }
+    .dot-security { background: #e11d48; }
+    .dot-data { background: #8b5cf6; }
+
+    .footer {
+      border-top: 1px solid rgba(147, 197, 253, 0.6);
+      font-size: 10px;
+      color: #334155;
+      padding: 10px 18px 14px;
+    }
+
+    @media (max-width: 980px) {
+      body {
+        padding: 12px;
+      }
+
+      .header {
+        padding: 14px;
+      }
+
+      .cards {
+        grid-template-columns: 1fr;
+      }
+
+      h1 {
+        font-size: 13px;
+        white-space: normal;
+      }
+
+      .subtitle {
+        font-size: 9px;
+      }
+
+      .toolbar-btn {
+        font-size: 10px;
+        padding: 5px 7px;
+      }
+    }
+
+    @media print {
+      .toolbar {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container" id="report-container">
+    <div class="header">
+      <div class="title-wrap">
+        <div class="pulse-dot" aria-hidden="true"></div>
+        <div>
+          <h1>.NET Security Audit Pipeline Architecture</h1>
+          <p class="subtitle">From route mapping to exploit-chain aggregation and final quality report</p>
+        </div>
+      </div>
+      <div class="toolbar" id="toolbar">
+        <div class="toolbar-actions">
+          <button class="toolbar-btn" type="button" onclick="copyAsImage()">📋 Copy</button>
+          <button class="toolbar-btn" type="button" onclick="downloadPNG()">🖼️ PNG</button>
+          <button class="toolbar-btn" type="button" onclick="downloadPDF()">📄 PDF</button>
+        </div>
+        <button class="toolbar-toggle" type="button" aria-label="Toggle export actions" onclick="toggleToolbar()">⋯</button>
+      </div>
+    </div>
+
+    <div class="diagram-shell">
+      <svg viewBox="0 0 1240 760" role="img" aria-label="dotnet security audit pipeline diagram">
+        <defs>
+          <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#bfdbfe" stroke-width="0.6"/>
+          </pattern>
+          <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#475569" />
+          </marker>
+          <marker id="arrowheadRose" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#e11d48" />
+          </marker>
+        </defs>
+
+        <rect x="0" y="0" width="1240" height="760" fill="#eef6ff"/>
+        <rect x="0" y="0" width="1240" height="760" fill="url(#grid)"/>
+
+        <rect x="24" y="24" width="1192" height="560" rx="12" fill="rgba(251, 191, 36, 0.06)" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="8,4"/>
+        <text x="42" y="46" fill="#b45309" font-size="8" font-weight="600">AUDIT ORCHESTRATION REGION</text>
+
+        <line x1="172" y1="152" x2="278" y2="152" stroke="#475569" stroke-width="1.6" marker-end="url(#arrowhead)"/>
+        <line x1="322" y1="152" x2="428" y2="152" stroke="#475569" stroke-width="1.6" marker-end="url(#arrowhead)"/>
+        <line x1="472" y1="152" x2="578" y2="152" stroke="#475569" stroke-width="1.6" marker-end="url(#arrowhead)"/>
+        <line x1="622" y1="152" x2="728" y2="152" stroke="#475569" stroke-width="1.6" marker-end="url(#arrowhead)"/>
+        <line x1="772" y1="152" x2="878" y2="152" stroke="#475569" stroke-width="1.6" marker-end="url(#arrowhead)"/>
+        <line x1="922" y1="152" x2="1028" y2="152" stroke="#475569" stroke-width="1.6" marker-end="url(#arrowhead)"/>
+        <line x1="1072" y1="152" x2="1178" y2="152" stroke="#475569" stroke-width="1.6" marker-end="url(#arrowhead)"/>
+
+        <line x1="125" y1="194" x2="125" y2="268" stroke="#e11d48" stroke-width="1.3" stroke-dasharray="4,4" marker-end="url(#arrowheadRose)"/>
+        <line x1="275" y1="194" x2="275" y2="268" stroke="#e11d48" stroke-width="1.3" stroke-dasharray="4,4" marker-end="url(#arrowheadRose)"/>
+        <line x1="575" y1="194" x2="575" y2="268" stroke="#e11d48" stroke-width="1.3" stroke-dasharray="4,4" marker-end="url(#arrowheadRose)"/>
+        <line x1="725" y1="194" x2="725" y2="268" stroke="#e11d48" stroke-width="1.3" stroke-dasharray="4,4" marker-end="url(#arrowheadRose)"/>
+        <line x1="875" y1="194" x2="875" y2="268" stroke="#e11d48" stroke-width="1.3" stroke-dasharray="4,4" marker-end="url(#arrowheadRose)"/>
+        <line x1="1025" y1="194" x2="1025" y2="268" stroke="#e11d48" stroke-width="1.3" stroke-dasharray="4,4" marker-end="url(#arrowheadRose)"/>
+        <line x1="1175" y1="194" x2="1175" y2="268" stroke="#e11d48" stroke-width="1.3" stroke-dasharray="4,4" marker-end="url(#arrowheadRose)"/>
+
+        <rect x="50" y="110" width="150" height="84" rx="6" fill="#eff6ff"/>
+        <rect x="50" y="110" width="150" height="84" rx="6" fill="var(--cloud-fill)" stroke="var(--cloud-stroke)" stroke-width="1.5"/>
+        <text x="125" y="133" fill="#0f172a" font-size="12" font-weight="600" text-anchor="middle">A Input</text>
+        <text x="125" y="150" fill="#334155" font-size="9" text-anchor="middle">source_path</text>
+        <text x="125" y="164" fill="#334155" font-size="9" text-anchor="middle">output_path</text>
+
+        <rect x="200" y="110" width="150" height="84" rx="6" fill="#eff6ff"/>
+        <rect x="200" y="110" width="150" height="84" rx="6" fill="var(--backend-fill)" stroke="var(--backend-stroke)" stroke-width="1.5"/>
+        <text x="275" y="133" fill="#0f172a" font-size="12" font-weight="600" text-anchor="middle">B route-mapper</text>
+        <text x="275" y="150" fill="#334155" font-size="9" text-anchor="middle">entry discovery</text>
+        <text x="275" y="164" fill="#334155" font-size="9" text-anchor="middle">route_id baseline</text>
+
+        <rect x="350" y="110" width="150" height="84" rx="6" fill="#eff6ff"/>
+        <rect x="350" y="110" width="150" height="84" rx="6" fill="var(--security-fill)" stroke="var(--security-stroke)" stroke-width="1.5"/>
+        <text x="425" y="133" fill="#0f172a" font-size="11" font-weight="600" text-anchor="middle">C auth-audit</text>
+        <text x="425" y="150" fill="#334155" font-size="9" text-anchor="middle">STATIC_MAPPING</text>
+        <text x="425" y="164" fill="#334155" font-size="9" text-anchor="middle">access model</text>
+
+        <rect x="500" y="110" width="150" height="84" rx="6" fill="#eff6ff"/>
+        <rect x="500" y="110" width="150" height="84" rx="6" fill="var(--backend-fill)" stroke="var(--backend-stroke)" stroke-width="1.5"/>
+        <text x="575" y="133" fill="#0f172a" font-size="11" font-weight="600" text-anchor="middle">D vuln-scanner</text>
+        <text x="575" y="150" fill="#334155" font-size="9" text-anchor="middle">broad screening</text>
+        <text x="575" y="164" fill="#334155" font-size="9" text-anchor="middle">risk candidates</text>
+
+        <rect x="650" y="110" width="150" height="84" rx="6" fill="#eff6ff"/>
+        <rect x="650" y="110" width="150" height="84" rx="6" fill="var(--frontend-fill)" stroke="var(--frontend-stroke)" stroke-width="1.5"/>
+        <text x="725" y="133" fill="#0f172a" font-size="11" font-weight="600" text-anchor="middle">E route-tracer</text>
+        <text x="725" y="150" fill="#334155" font-size="9" text-anchor="middle">call-chain closure</text>
+        <text x="725" y="164" fill="#334155" font-size="9" text-anchor="middle">trace_status</text>
+
+        <rect x="800" y="110" width="150" height="84" rx="6" fill="#eff6ff"/>
+        <rect x="800" y="110" width="150" height="84" rx="6" fill="var(--backend-fill)" stroke="var(--backend-stroke)" stroke-width="1.5"/>
+        <text x="875" y="131" fill="#0f172a" font-size="11" font-weight="600" text-anchor="middle">F framework audit</text>
+        <text x="875" y="147" fill="#334155" font-size="8" text-anchor="middle">aspnet-core / mvc / webapi</text>
+        <text x="875" y="160" fill="#334155" font-size="8" text-anchor="middle">blazor / signalr / graphql / wcf</text>
+
+        <rect x="950" y="110" width="150" height="84" rx="6" fill="#eff6ff"/>
+        <rect x="950" y="110" width="150" height="84" rx="6" fill="var(--security-fill)" stroke="var(--security-stroke)" stroke-width="1.5"/>
+        <text x="1025" y="133" fill="#0f172a" font-size="11" font-weight="600" text-anchor="middle">G vuln specials</text>
+        <text x="1025" y="150" fill="#334155" font-size="8" text-anchor="middle">auth/config/crypto/sql/ssrf/xss...</text>
+        <text x="1025" y="164" fill="#334155" font-size="8" text-anchor="middle">targeted validation</text>
+
+        <rect x="1100" y="110" width="150" height="84" rx="6" fill="#eff6ff"/>
+        <rect x="1100" y="110" width="150" height="84" rx="6" fill="var(--database-fill)" stroke="var(--database-stroke)" stroke-width="1.5"/>
+        <text x="1175" y="131" fill="#0f172a" font-size="11" font-weight="600" text-anchor="middle">H / I / J finalize</text>
+        <text x="1175" y="147" fill="#334155" font-size="8" text-anchor="middle">vuln_poc → exploit-chain</text>
+        <text x="1175" y="160" fill="#334155" font-size="8" text-anchor="middle">→ audit-pipeline report</text>
+
+        <rect x="50" y="268" width="150" height="66" rx="6" fill="#eff6ff"/>
+        <rect x="50" y="268" width="150" height="66" rx="6" fill="var(--external-fill)" stroke="var(--external-stroke)" stroke-width="1.5"/>
+        <text x="125" y="291" fill="#0f172a" font-size="10" font-weight="600" text-anchor="middle">O1 route_mapping/</text>
+        <text x="125" y="307" fill="#334155" font-size="8" text-anchor="middle">entry, route_id</text>
+
+        <rect x="200" y="268" width="150" height="66" rx="6" fill="#eff6ff"/>
+        <rect x="200" y="268" width="150" height="66" rx="6" fill="var(--external-fill)" stroke="var(--external-stroke)" stroke-width="1.5"/>
+        <text x="275" y="291" fill="#0f172a" font-size="10" font-weight="600" text-anchor="middle">O2 auth_audit/</text>
+        <text x="275" y="307" fill="#334155" font-size="8" text-anchor="middle">mapping evidence</text>
+
+        <rect x="500" y="268" width="150" height="66" rx="6" fill="#eff6ff"/>
+        <rect x="500" y="268" width="150" height="66" rx="6" fill="var(--external-fill)" stroke="var(--external-stroke)" stroke-width="1.5"/>
+        <text x="575" y="291" fill="#0f172a" font-size="10" font-weight="600" text-anchor="middle">O3 route_tracer/</text>
+        <text x="575" y="307" fill="#334155" font-size="8" text-anchor="middle">call-chain facts</text>
+
+        <rect x="650" y="268" width="150" height="66" rx="6" fill="#eff6ff"/>
+        <rect x="650" y="268" width="150" height="66" rx="6" fill="var(--external-fill)" stroke="var(--external-stroke)" stroke-width="1.5"/>
+        <text x="725" y="291" fill="#0f172a" font-size="10" font-weight="600" text-anchor="middle">O4 framework_audit/</text>
+        <text x="725" y="307" fill="#334155" font-size="8" text-anchor="middle">framework facts</text>
+
+        <rect x="800" y="268" width="150" height="66" rx="6" fill="#eff6ff"/>
+        <rect x="800" y="268" width="150" height="66" rx="6" fill="var(--external-fill)" stroke="var(--external-stroke)" stroke-width="1.5"/>
+        <text x="875" y="291" fill="#0f172a" font-size="10" font-weight="600" text-anchor="middle">O5 vuln_audit/</text>
+        <text x="875" y="307" fill="#334155" font-size="8" text-anchor="middle">specialized findings</text>
+
+        <rect x="950" y="268" width="150" height="66" rx="6" fill="#eff6ff"/>
+        <rect x="950" y="268" width="150" height="66" rx="6" fill="var(--external-fill)" stroke="var(--external-stroke)" stroke-width="1.5"/>
+        <text x="1025" y="291" fill="#0f172a" font-size="10" font-weight="600" text-anchor="middle">O6 vuln_poc/</text>
+        <text x="1025" y="307" fill="#334155" font-size="8" text-anchor="middle">verification payload</text>
+
+        <rect x="1100" y="268" width="150" height="66" rx="6" fill="#eff6ff"/>
+        <rect x="1100" y="268" width="150" height="66" rx="6" fill="var(--external-fill)" stroke="var(--external-stroke)" stroke-width="1.5"/>
+        <text x="1175" y="291" fill="#0f172a" font-size="10" font-weight="600" text-anchor="middle">O7 cross_analysis/</text>
+        <text x="1175" y="307" fill="#334155" font-size="8" text-anchor="middle">chain aggregation</text>
+
+        <rect x="1050" y="356" width="170" height="78" rx="6" fill="#eff6ff"/>
+        <rect x="1050" y="356" width="170" height="78" rx="6" fill="var(--database-fill)" stroke="var(--database-stroke)" stroke-width="1.5"/>
+        <text x="1135" y="382" fill="#0f172a" font-size="11" font-weight="700" text-anchor="middle">O8 vuln_report + quality</text>
+        <text x="1135" y="399" fill="#334155" font-size="8" text-anchor="middle">evidence strength tier</text>
+        <text x="1135" y="413" fill="#334155" font-size="8" text-anchor="middle">conflict-preserved summary</text>
+
+        <line x1="1175" y1="334" x2="1175" y2="356" stroke="#475569" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+
+        <rect x="34" y="448" width="1010" height="108" rx="8" fill="rgba(225, 29, 72, 0.08)" stroke="#e11d48" stroke-width="1.3" stroke-dasharray="4,4"/>
+        <text x="54" y="470" fill="#be123c" font-size="8" font-weight="600">SECURITY EVIDENCE CLOSURE</text>
+        <text x="54" y="490" fill="#334155" font-size="9">1) route_id + entry must be mapped before vulnerability claims.</text>
+        <text x="54" y="508" fill="#334155" font-size="9">2) trace_status + sink evidence (EVID_*) determines confidence level.</text>
+        <text x="54" y="526" fill="#334155" font-size="9">3) High-risk conclusions require reproducible PoC or explicit environment assumptions.</text>
+
+        <rect x="1066" y="452" width="140" height="26" rx="4" fill="rgba(251, 146, 60, 0.24)" stroke="#fb923c" stroke-width="1"/>
+        <text x="1136" y="469" fill="#c2410c" font-size="7" text-anchor="middle">Pipeline Sync Bus</text>
+
+        <rect x="44" y="606" width="700" height="120" rx="8" fill="rgba(255, 255, 255, 0.78)" stroke="#93c5fd" stroke-width="1.1"/>
+        <text x="60" y="626" fill="#0f172a" font-size="9" font-weight="700">LEGEND</text>
+
+        <rect x="60" y="638" width="22" height="14" rx="3" fill="var(--backend-fill)" stroke="var(--backend-stroke)" stroke-width="1"/>
+        <text x="92" y="648" fill="#0f172a" font-size="8">backend audit stage</text>
+
+        <rect x="250" y="638" width="22" height="14" rx="3" fill="var(--security-fill)" stroke="var(--security-stroke)" stroke-width="1"/>
+        <text x="282" y="648" fill="#0f172a" font-size="8">security-focused stage</text>
+
+        <rect x="470" y="638" width="22" height="14" rx="3" fill="var(--database-fill)" stroke="var(--database-stroke)" stroke-width="1"/>
+        <text x="502" y="648" fill="#0f172a" font-size="8">final report / quality output</text>
+
+        <line x1="60" y1="676" x2="92" y2="676" stroke="#475569" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <text x="102" y="680" fill="#0f172a" font-size="8">main pipeline transition</text>
+
+        <line x1="288" y1="676" x2="320" y2="676" stroke="#e11d48" stroke-width="1.4" stroke-dasharray="4,4" marker-end="url(#arrowheadRose)"/>
+        <text x="330" y="680" fill="#0f172a" font-size="8">evidence/trace branch output</text>
+
+        <rect x="540" y="664" width="22" height="14" rx="3" fill="rgba(251, 146, 60, 0.24)" stroke="#fb923c" stroke-width="1"/>
+        <text x="572" y="674" fill="#0f172a" font-size="8">message bus / sync bridge</text>
+      </svg>
+    </div>
+
+    <div class="cards">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-dot dot-backend"></div>
+          <h3>流程主线</h3>
+        </div>
+        <ul>
+          <li>• 先建模入口与鉴权，再做漏洞初筛和路由追踪闭合。</li>
+          <li>• framework 专项提供漏洞专项可复用的前置事实。</li>
+          <li>• 最终通过 exploit-chain 与 pipeline 输出统一报告。</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-dot dot-security"></div>
+          <h3>证据约束</h3>
+        </div>
+        <ul>
+          <li>• 高风险结论必须回链 route_id、trace_status、sink evidence。</li>
+          <li>• 证据不足时仅输出待验证或环境依赖，不强行下结论。</li>
+          <li>• 汇总阶段保留冲突证据，避免静默覆盖。</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-dot dot-data"></div>
+          <h3>产物矩阵</h3>
+        </div>
+        <ul>
+          <li>• O1~O8 覆盖 route/auth/trace/framework/vuln/poc/cross/report。</li>
+          <li>• 每阶段建议落盘 index 时间戳文档，保证可追溯。</li>
+          <li>• 统一执行状态可降低“未发现即未记录”的盲区。</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer">
+      diagram_source: README mermaid pipeline | style: bright technical variant | date: 2026-05-21
+    </div>
+  </div>
+
+  <script>
+    function toggleToolbar() {
+      const toolbar = document.getElementById('toolbar');
+      toolbar.classList.toggle('expanded');
+    }
+
+    function getCaptureArea() {
+      const report = document.getElementById('report-container');
+      const toolbar = document.getElementById('toolbar');
+      const rect = report.getBoundingClientRect();
+      const padding = 32;
+      return {
+        x: Math.max(0, rect.left - padding + window.scrollX),
+        y: Math.max(0, rect.top - padding + window.scrollY),
+        width: rect.width + padding * 2,
+        height: rect.height + padding * 2,
+        toolbar
+      };
+    }
+
+    async function renderCanvas() {
+      const area = getCaptureArea();
+      return html2canvas(document.body, {
+        x: area.x,
+        y: area.y,
+        width: area.width,
+        height: area.height,
+        scale: 2,
+        useCORS: true,
+        backgroundColor: null,
+        ignoreElements: (el) => el === area.toolbar || area.toolbar.contains(el)
+      });
+    }
+
+    async function copyAsImage() {
+      if (!navigator.clipboard || !window.ClipboardItem) {
+        alert('Clipboard API unavailable in this context.');
+        return;
+      }
+      try {
+        const canvas = await renderCanvas();
+        const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+        await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+      } catch (error) {
+        alert('Copy failed: ' + error.message);
+      }
+    }
+
+    async function downloadPNG() {
+      try {
+        const canvas = await renderCanvas();
+        const link = document.createElement('a');
+        link.href = canvas.toDataURL('image/png');
+        link.download = 'dotnet-audit-pipeline-bright.png';
+        link.click();
+      } catch (error) {
+        alert('PNG export failed: ' + error.message);
+      }
+    }
+
+    async function downloadPDF() {
+      try {
+        const canvas = await renderCanvas();
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new window.jspdf.jsPDF({
+          orientation: canvas.width >= canvas.height ? 'landscape' : 'portrait',
+          unit: 'pt',
+          format: [canvas.width, canvas.height]
+        });
+        pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+        pdf.save('dotnet-audit-pipeline-bright.pdf');
+      } catch (error) {
+        alert('PDF export failed: ' + error.message);
+      }
+    }
+  </script>
+</body>
+</html>
